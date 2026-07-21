@@ -32,6 +32,9 @@ export interface AtsIssue {
 
 // Skema utama JSON output dari AI
 export interface ResumeAnalysisResult {
+    detectedRole: string;
+    detectedLanguage: string;
+    executiveSummary: string;
     overallScore: number;
     sectionScores: SectionScores;
     genericPhrases: GenericPhrase[];
