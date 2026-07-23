@@ -9,4 +9,4 @@ if (!process.env.GEMINI_API_KEY) {
 export const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Kita tentukan model standar yang akan kita pakai sesuai request Anda
-export const GEMINI_MODEL = 'gemini-2.5-flash';
+export const GEMINI_MODEL = 'gemini-3.1-flash-lite';
