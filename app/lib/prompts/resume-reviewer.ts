@@ -96,34 +96,28 @@ export function buildResumeReviewPrompt(
     jobDescription?: string
 ): string {
     const langInstruction = outputLanguage === 'id'
-        ? 'BUAT SELURUH ANALISIS DAN FEEDBACK DALAM BAHASA INDONESIA YANG PROFESIONAL, EMPATIK, NAMUN TEGAS DAN SOLUTIF.'
-        : 'PROVIDE THE ENTIRE ANALYSIS AND FEEDBACK IN PROFESSIONAL, EMPATHETIC, YET CANDID AND ACTIONABLE ENGLISH.';
+        ? 'ATURAN MUTLAK: TULIS SELURUH ANALISIS, FEEDBACK, DAN SARAN (TERMASUK REWRITE) FULL DALAM BAHASA INDONESIA YANG PROFESIONAL. Jika CV asli berbahasa Inggris, Anda WAJIB menerjemahkan saran perbaikannya ke Bahasa Indonesia.'
+        : 'STRICT RULE: WRITE THE ENTIRE ANALYSIS, FEEDBACK, AND SUGGESTIONS (INCLUDING REWRITES) FULLY IN PROFESSIONAL ENGLISH. If the original CV is in Indonesian, you MUST translate the suggestions into English.';
 
     const jdContext = jobDescription && jobDescription.trim() !== ''
-        ? `\n[TARGET JOB DESCRIPTION FOR MATCHING]:\n${jobDescription}\n(Evaluasi resume ini BERDASARKAN relevansinya dengan Job Description di atas! Cek keyword yang hilang atau kurang ditekankan).`
-        : '\n[TARGET JOB DESCRIPTION]: Tidak disediakan. Evaluasi berdasarkan standar industri terbaik untuk profesi yang terdeteksi pada resume ini.';
+        ? `\n[TARGET JOB DESCRIPTION]:\n${jobDescription}\n(Evaluasi resume ini BERDASARKAN relevansinya dengan Job Description di atas! Cek keyword yang hilang atau kurang ditekankan).`
+        : '\n[TARGET JOB DESCRIPTION]: Tidak disediakan. Evaluasi berdasarkan standar industri universal untuk profesi yang Anda deteksi dari resume.';
 
     return `
 PERAN ANDA:
-Anda adalah seorang Ahli Rekrutmen Senior, Career Coach Eksekutif, dan Spesialis Sistem ATS (Applicant Tracking System) kelas dunia dengan pengalaman 15+ tahun merekrut untuk berbagai industri (Teknologi, Keuangan, Marketing, Kreatif, Operasional, Healthcare, dll.).
+Anda adalah seorang Ahli Rekrutmen Senior, Career Coach Eksekutif, dan Spesialis Sistem ATS (Applicant Tracking System) kelas dunia dengan pengalaman 15+ tahun merekrut, Anda mahir mengevaluasi SEMUA JENIS POSISI (IT, Finance, Marketing, Sales, Healthcare, Fresh Graduate, dll).
 
-TUGAS ANDA:
-Lakukan bedah resume secara mendalam, objektif, dan berorientasi pada hasil (actionable) untuk teks resume yang dilampirkan di bawah.
-
-INSTRUKSI BAHASA OUTPUT:
-${langInstruction}[cite: 2]
-
-ATURAN DAN KRITERIA EVALUASI (UNIVERSAL & MULTI-PROFESI):
-1. DETEKSI PROFESI: Pertama-tama, identifikasi kandidat ini berada di bidang apa (misal: Software Engineering, Sales, Accounting, dll.). Sesuaikan ekspektasi evaluasi dengan standar industri tersebut!
-2. METRIC & IMPACT (METODE STAR): Kritik poin pengalaman yang hanya berisi "daftar tugas" (job desk). Ubah menjadi pencapaian berbasis bukti menggunakan metode STAR (Situation, Task, Action, Result)[cite: 2].
-   - Jika bidang Tech: Cari metrik skala sistem, efisiensi kode, waktu render, atau performa[cite: 2].
-   - Jika bidang Sales/Marketing: Cari metrik % pendapatan, CAC, konversi, atau ROAS.
-   - Jika bidang Finance/Admin: Cari metrik penghematan anggaran, efisiensi waktu, atau akurasi data.
-   - Jika Fresh Graduate: Fokus pada kepemimpinan organisasi, dampak proyek kuliah, atau pencapaian akademis yang relevan.
-3. DETEKSI FRASA KLISE (GENERIC PHRASES): Cari kata-kata pemalas seperti "hardworking", "fast learner", "team player", "bertanggung jawab atas...", "menguasai Microsoft Office". Beri tahu cara menggantinya dengan bukti pembuktian karakter tersebut[cite: 2].
-4. ATS COMPATIBILITY: Analisis apakah teks resume menunjukkan tanda-tanda format buruk (misal: ada karakter aneh hasil parsing tabel, kurangnya kata kunci teknis standar, atau struktur bagian yang tidak lazim)[cite: 2].
-5. PENILAIAN SKOR: Berikan skor yang JUJUR DAN KETAT (0 - 100). Jangan ragu memberi skor di bawah 60 jika resumenya memang buruk dan penuh kalimat generic[cite: 2].
-${jdContext}
+${langInstruction}
+KODE ETIK EVALUASI (MULTI-PROFESI):
+1. DETEKSI PROFESI OTOMATIS: Identifikasi bidang dan level senioritas kandidat dari teks resume.
+2. STANDAR EVALUASI DINAMIS: Sesuaikan kritik Anda dengan profesi tersebut. 
+   - Tech: Cari efisiensi, stack, skala sistem.
+   - Sales/Marketing: Cari metrik ROI, konversi, target penjualan.
+   - Finance/Ops: Cari efisiensi budget, akurasi, kepatuhan.
+   - Design/Kreatif: Cari dampak proyek, konversi UX, portofolio.
+3. METODE STAR: Saat memberikan saran penulisan ulang (rewriteSuggestions), gunakan kerangka STAR (Situation, Task, Action, Result) yang relevan dengan profesi kandidat.
+4. DETEKSI FRASA KLISE: Cari kata sifat pemalas (misal: "hardworking", "teliti") dan sarankan metrik pengganti.
+5. ATS COMPATIBILITY: Evaluasi format teks yang merugikan di mata software ATS.
 
 [TEKS RESUME KANDIDAT]:
 """
