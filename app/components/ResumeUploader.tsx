@@ -211,7 +211,7 @@ export default function ResumeUploader({ onParseSuccess }: ResumeUploaderProps) 
                                 </button>
                                 <button
                                     onClick={handleConfirmAnalyze}
-                                    className="bg-primary hover:bg-primary-active text-on-primary px-6 py-2.5 text-[14px] font-semibold rounded-md transition-colors shadow-sm flex items-center gap-2"
+                                    className="bg-primary hover:bg-primary-active text-white px-6 py-2.5 text-[14px] font-semibold rounded-md transition-colors shadow-sm flex items-center gap-2"
                                 >
                                     <span>Mulai Analisis AI</span>
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
