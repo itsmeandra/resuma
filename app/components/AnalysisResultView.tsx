@@ -1,19 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ResumeAnalysisResult } from '@/app/types';
+import { text } from 'stream/consumers';
+import HighlightedResume from './HighlightedResume';
 
 interface AnalysisResultViewProps {
     data: Partial<ResumeAnalysisResult> | null;
     isStreaming: boolean;
     onReset: () => void;
+    originalText: string;
 }
 
-export default function AnalysisResultView({ data, isStreaming, onReset }: AnalysisResultViewProps) {
+export default function AnalysisResultView({ data, isStreaming, onReset, originalText }: AnalysisResultViewProps) {
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
     if (!data && isStreaming) {
         // Tampilan Loading Awal (Sebelum chunk pertama berhasil di-parse)
         return (
-            <div className="w-full max-w-4xl mx-auto bg-canvas border border-hairline rounded-xl p-12 text-center space-y-6 shadow-sm">
+            <div className="w-full max-w-4xl mx-auto bg-canvas border border-hairline rounded-xl p-6 md:p-12 text-center space-y-6 shadow-sm">
                 <div className="inline-block w-10 h-10 border-3 border-muted border-t-primary rounded-full animate-spin"></div>
                 <div className="space-y-2">
                     <h3 className="font-display font-semibold text-xl text-ink">
@@ -23,7 +27,7 @@ export default function AnalysisResultView({ data, isStreaming, onReset }: Analy
                         Mengevaluasi kompetensi, mengecek kompatibilitas ATS, dan menyusun saran STAR.
                     </p>
                 </div>
-            </div>
+            </div >
         );
     }
 
@@ -36,6 +40,12 @@ export default function AnalysisResultView({ data, isStreaming, onReset }: Analy
         if (score >= 60) return 'text-warning bg-warning/10 border-warning/30';
         return 'text-error bg-error/10 border-error/30';
     };
+
+    const handleCopy = (text: string, index: number) => {
+        navigator.clipboard.writeText(text);
+        setCopiedIndex(index);
+        setTimeout(() => setCopiedIndex(null), 2000);
+    }
 
     return (
         <div className="w-full max-w-4xl mx-auto space-y-8 font-body text-ink animate-fadeIn">
@@ -130,7 +140,15 @@ export default function AnalysisResultView({ data, isStreaming, onReset }: Analy
                                         <p className="text-[13px] text-body line-through decoration-error/50">{item.original}</p>
                                     </div>
                                     <div className="bg-success/5 p-3.5 rounded-md border border-success/20">
-                                        <span className="text-[11px] font-bold text-success uppercase block mb-1">Versi STAR (Disarankan):</span>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <span className="text-[11px] font-bold text-success uppercase">Versi STAR (Disarankan):</span>
+                                            <button
+                                                onClick={() => handleCopy(item.improved || '', idx)}
+                                                className="text-[10px] text-ink font-semibold bg-canvas px-2 py-1 rounded border border-hairline shadow-sm hover:bg-surface-soft transition-colors"
+                                            >
+                                                {copiedIndex === idx ? 'Tersalin' : 'Salin'}
+                                            </button>
+                                        </div>
                                         <p className="text-[13px] text-ink font-medium">{item.improved}</p>
                                     </div>
                                 </div>
@@ -144,10 +162,10 @@ export default function AnalysisResultView({ data, isStreaming, onReset }: Analy
                 </div>
             </div>
 
-            {/* ATS ISSUES & GENERIC PHRASES GRID (2 Columns)*/}
+            {/* GRID ATS ISSUES & HIGHLIGHTED TEXT*/}
             <div className="grid md:grid-cols-2 gap-6">
 
-                {/* ATS Issues Card[cite: 1, 2] */}
+                {/* ATS Issues Card */}
                 <div className="bg-canvas border border-hairline rounded-xl p-6 space-y-4">
                     <h3 className="font-display font-semibold text-lg text-ink">
                         Kompatibilitas ATS
@@ -158,7 +176,7 @@ export default function AnalysisResultView({ data, isStreaming, onReset }: Analy
                         ) : (
                             data.atsIssues.map((ats, idx) => (
                                 <div key={idx} className="p-3.5 rounded-lg border border-hairline bg-surface-soft space-y-1.5">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between gap-3">
                                         <span className="text-[13px] font-semibold text-ink">{ats.issue}</span>
                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${ats.severity === 'high' ? 'bg-error text-white' :
                                             ats.severity === 'medium' ? 'bg-warning text-ink' : 'bg-surface-strong text-muted'
@@ -173,18 +191,31 @@ export default function AnalysisResultView({ data, isStreaming, onReset }: Analy
                     </div>
                 </div>
 
-                {/* Generic Phrases Card[cite: 1, 2] */}
+                {/* Highlighted Original Text Card (Interaktif)*/}
                 <div className="bg-canvas border border-hairline rounded-xl p-6 space-y-4">
                     <h3 className="font-display font-semibold text-lg text-ink">
                         Deteksi Frasa Klise
                     </h3>
+                    <p className="text-[12px] text-muted  mt-1">
+                        Arahkan kursosr (hover) pada <span className="bg-warning/20 text-warning px-1 rounded-sm font-semibold">teks yang disorot</span> di bawah untuk melihat saran.
+                    </p>
+                    <div className="grow">
+                        {!originalText ? (
+                            <p className="text-[13px] text-muted italic">Memuat teks...</p>
+                        ) : (
+                            <HighlightedResume
+                                text={originalText}
+                                genericPhrases={data.genericPhrases}
+                            />
+                        )}
+                    </div>
                     <div className="space-y-3">
                         {!data.genericPhrases || data.genericPhrases.length === 0 ? (
                             <p className="text-[13px] text-muted italic">Mencari kata generic pemalas...</p>
                         ) : (
                             data.genericPhrases.map((phrase, idx) => (
                                 <div key={idx} className="p-3.5 rounded-lg border border-hairline bg-surface-soft space-y-1">
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex justify-between items-start gap-2">
                                         <span className="text-[13px] font-semibold text-error">&quot;{phrase.text}&quot;</span>
                                         <span className="text-[11px] text-muted-soft">{phrase.location}</span>
                                     </div>
