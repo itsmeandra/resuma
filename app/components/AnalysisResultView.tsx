@@ -50,7 +50,7 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
     return (
         <div className="w-full max-w-4xl mx-auto space-y-8 font-body text-ink animate-fadeIn">
 
-            {/* HEADER & EXECUTIVE SUMMARY CARD (Cal.com SaaS Style) */}
+            {/* HEADER & EXECUTIVE SUMMARY */}
             <div className="bg-canvas border border-hairline rounded-xl p-6 md:p-8 shadow-[0_4px_12px_rgba(0,0,0,0.05)] relative overflow-hidden">
                 {isStreaming && (
                     <div className="absolute top-0 left-0 right-0 h-1 bg-surface-strong overflow-hidden">
@@ -115,8 +115,80 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
                 )}
             </div>
 
+            {/* KEYWORD GAP ANALYSIS - Hanya muncul jika Job Description diinputkan */}
+            {data.keywordAnalysis && (
+                <div className="bg-canvas border border-hairline rounded-xl p-6 md:p-8 space-y-6 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-hairline-soft pb-5">
+                        <div>
+                            <h3 className="font-display font-semibold text-xl text-ink">Job Description Match</h3>
+                            <p className="text-[14px] text-muted mt-1">
+                                Analisis kecocokan keyword (ATS Scanner) antara resume Anda dan deskripsi lowongan.
+                            </p>
+                        </div>
+
+                        {/* Match Score Indicator */}
+                        <div className="flex items-center gap-4 bg-canvas p-3.5 rounded-xl border border-hairline shadow-sm shrink-0">
+                            <span className="text-[12px] font-semibold text-muted uppercase">Tingkat Kecocokan</span>
+                            <span className={`font-display font-bold text-3xl ${getScoreColor(data.keywordAnalysis.matchScore)}`}>
+                                {data.keywordAnalysis.matchScore !== undefined ? `${data.keywordAnalysis.matchScore}%` : '?'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* Matched Keywords */}
+                        <div className="space-y-4">
+                            <h4 className="text-[14px] font-semibold text-success flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+                                Keyword Ditemukan di Resume
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {data.keywordAnalysis.matchedKeywords && data.keywordAnalysis.matchedKeywords.length > 0 ? (
+                                    data.keywordAnalysis.matchedKeywords.map((kw, i) => (
+                                        <span key={`match-${i}`} className="bg-success/10 text-success border border-success/20 text-[12px] font-medium px-3 py-1.5 rounded-full transition-colors hover:bg-success/20">
+                                            {kw}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="text-[13px] text-muted italic bg-canvas px-3 py-1 rounded border border-hairline">
+                                        Sedang mencari kecocokan...
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Missing Keywords (Gap) */}
+                        <div className="space-y-4">
+                            <h4 className="text-[14px] font-semibold text-error flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 rounded-full bg-error shadow-[0_0_8px_rgba(239,68,68,0.4)]"></span>
+                                Keyword Penting yang Hilang (Gap)
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {data.keywordAnalysis.missingKeywords && data.keywordAnalysis.missingKeywords.length > 0 ? (
+                                    data.keywordAnalysis.missingKeywords.map((kw, i) => (
+                                        <span key={`miss-${i}`} className="bg-error/10 text-error border border-error/20 text-[12px] font-medium px-3 py-1.5 rounded-full transition-colors hover:bg-error/20">
+                                            {kw}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="text-[13px] text-muted italic bg-canvas px-3 py-1 rounded border border-hairline">
+                                        Semua keyword penting sudah tercakup!
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-canvas border border-hairline p-4 rounded-lg flex items-start gap-3 mt-4">
+                        <p className="text-[13px] text-muted leading-relaxed">
+                            <strong className="text-ink">Strategi:</strong> Pastikan untuk menyelipkan kata kunci yang berada di zona merah (hilang) ke dalam bagian "Keahlian" (Skills) atau secara natural ke dalam poin "Pengalaman" (Experience) pada resume Anda sebelum melamar posisi ini.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* REWRITE SUGGESTIONS (STAR METHOD) CARD */}
-            <div className="bg-surface-card border border-hairline rounded-xl p-6 md:p-8 space-y-6">
+            <div className="bg-canvas border border-hairline rounded-xl p-6 md:p-8 space-y-6 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
                 <div>
                     <h3 className="font-display font-semibold text-xl text-ink">
                         Saran Penulisan Ulang (Metode STAR)
