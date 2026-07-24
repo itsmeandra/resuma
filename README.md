@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Resuma
 
-## Getting Started
+**Resuma** adalah AI resume & cover letter reviewer yang dirancang khusus untuk konteks rekrutmen Indonesia. Bukan sekadar kasih skor angka, Resuma ngasih feedback yang spesifik, actionable, dan relevan sama gaya kerja lokal bilingual (ID/EN), paham budaya kerja Indonesia, dan nggak maksa format ala Amerika/Eropa yang kadang nggak cocok di sini.
 
-First, run the development server:
+Cocok buat fresh graduate yang bingung nulis pengalaman organisasi, career switcher yang mau reframe skill biar keliatan relevan, atau job seeker yang udah kirim puluhan lamaran tapi jarang dipanggil interview.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Fitur
+
+- **Upload & Parsing:** upload resume dalam format PDF/DOCX, langsung diekstrak jadi teks tanpa copy-paste manual.
+- **Scoring Menyeluruh:** skor 0–100 berdasarkan kejelasan, relevansi, penggunaan angka/impact, ATS-compatibility, dan tata bahasa, lengkap dengan breakdown per section (Summary, Experience, Education, Skills).
+- **Deteksi Kalimat Klise:** nyorot kalimat generic kayak "hardworking" atau "team player" yang nggak punya bukti konkret.
+- **Rewrite Suggestion (STAR Method):** saran penulisan ulang poin pengalaman kerja pakai pendekatan Situation-Task-Action-Result.
+- **Job Description Matching:** tempel Job Description target, sistem bakal cek kecocokan keyword dan kasih tau apa yang masih kurang.
+- **Streaming Response:** hasil analisis muncul real-time, nggak perlu nunggu proses selesai baru keliatan.
+- **Bilingual Output:** pilih bahasa hasil analisis, Indonesia atau Inggris.
+- **Export ke PDF:** simpan atau bagikan hasil review dalam bentuk laporan PDF.
+- **Riwayat Review:** bandingin progres revisi resume dari waktu ke waktu (disimpan di local storage).
+
+---
+
+## Tech Stack
+
+**Frontend**
+- [Next.js](https://nextjs.org/) (React)
+- [TanStack Query](https://tanstack.com/query) buat handle streaming state (loading, partial data, error)
+- [Tailwind CSS](https://tailwindcss.com/)
+
+**Backend / API Layer**
+- Next.js API Routes (Edge/Node.js Functions)
+- [unpdf](https://www.npmjs.com/package/unpdf) parsing file PDF
+- [mammoth](https://www.npmjs.com/package/mammoth) parsing file DOCX
+- [Gemini API](https://aistudio.google.com/app/apikey) streaming response + structured output (JSON)
+
+**Storage**
+- MVP: `localStorage` / `IndexedDB` (client-side, tanpa autentikasi)
+- Rencana lanjutan: PostgreSQL / Supabase (kalau ada fitur akun & riwayat lintas device)
+
+---
+
+## Arsitektur Singkat
+
+```
+Frontend (Next.js) → Backend API Route (parsing + prompt builder) → Claude API (streaming + JSON)
+                ↑                                                          ↓
+                └────────────────── stream hasil kembali ke UI ───────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Parsing file dan pemanggilan AI dijalankan di server (bukan client) supaya API key aman dan library parsing konsisten.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Cara Install & Menjalankan
 
-## Learn More
+### Prasyarat
+- Node.js ≥ 18
+- API key dari [Gemini](https://aistudio.google.com/app/apikey)
 
-To learn more about Next.js, take a look at the following resources:
+### Langkah-langkah
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# 1. Clone repository
+git clone https://github.com/itsmeandra/resuma.git
+cd resuma
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 2. Install dependencies
+npm install
 
-## Deploy on Vercel
+# 3. Setup environment variables
+cp .env.example .env.local
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Isi `.env.local`:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```env
+GEMINI_API_KEY=your_api_key_here
+```
+
+```bash
+# 4. Jalankan development server
+npm run dev
+```
+
+Buka [http://localhost:3000](http://localhost:3000) di browser.
+
+---
+
+<p align="center">
+  Dibuat dengan ☕ dan sedikit overthinking soal ATS keyword.
+</p>
