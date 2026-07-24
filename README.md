@@ -42,7 +42,7 @@ Cocok buat fresh graduate yang bingung nulis pengalaman organisasi, career switc
 ## Arsitektur Singkat
 
 ```
-Frontend (Next.js) → Backend API Route (parsing + prompt builder) → Claude API (streaming + JSON)
+Frontend (Next.js) → Backend API Route (parsing + prompt builder) → Gemini API (streaming + JSON)
                 ↑                                                          ↓
                 └────────────────── stream hasil kembali ke UI ───────────┘
 ```
