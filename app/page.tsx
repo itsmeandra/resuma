@@ -11,6 +11,7 @@ export default function Home() {
   const [analysisData, setAnalysisData] = useState<Partial<ResumeAnalysisResult> | null>(null);
   const [language, setLanguage] = useState<'id' | 'en'>('id');
   const [jobDescription, setJobDescription] = useState<string>('');
+  const [originalResumeText, setOriginalResumeText] = useState<string>('');
 
 
   // const [analyzingData, setAnalyzingData] = useState<{ filename: string; text: string } | null>(null);
@@ -24,6 +25,7 @@ export default function Home() {
   const handleStartAnalysis = async (filename: string, text: string) => {
     setIsAnalyzing(true);
     setAnalysisData(null);
+    setOriginalResumeText(text);
 
     try {
       const response = await fetch('/api/analyze', {
@@ -77,7 +79,7 @@ export default function Home() {
     <main className="min-h-screen bg-canvas text-ink font-body flex flex-col justify-between">
       <div>
         {/* TOP NAVIGATION (Top Nav: 64px, White Canvas) */}
-        <header className="h-16 bg-canvas border-b border-hairline px-6 flex items-center justify-between sticky top-0 z-50">
+        <header className="h-16 bg-canvas border-b border-hairline px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
           <div className="flex items-center gap-3">
             {/* Logo bergaya geometris  */}
             {/* <div className="w-8 h-8 rounded-full bg-primary text-white font-display font-bold flex items-center justify-center text-sm">
@@ -88,7 +90,7 @@ export default function Home() {
             </span>
           </div>
 
-          {/* Nav Pill Group (Signature Cal.com Interactive Switcher) */}
+          {/* Nav Pill Group */}
           <div className="hidden md:flex bg-surface-soft p-1 rounded-full border border-hairline text-[14px] font-medium">
             <span className="bg-canvas text-ink px-4 py-1.5 rounded-full shadow-sm cursor-pointer">
               1. Upload Resume
@@ -101,18 +103,6 @@ export default function Home() {
             </span>
           </div>
 
-          {/* <div className="flex items-center gap-3">
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as 'id' | 'en')}
-              disabled={isAnalyzing}
-              className="bg-surface-soft border border-hairline text-ink text-[13px] font-medium px-3 py-1.5 rounded-md focus:outline-none focus:border-muted cursor-pointer"
-            >
-              <option value="id">Bahasa Indonesia</option>
-              <option value="en">English</option>
-            </select>
-          </div> */}
-
           {/* Right Action */}
           <div className="flex items-center gap-3">
             <span className="text-[13px] font-medium text-muted hidden sm:inline">
@@ -123,7 +113,8 @@ export default function Home() {
 
         {/* HERO BAND (Generous Whitespace 96px rhythm) */}
         {!analysisData && !isAnalyzing && (
-          <section className="max-w-4xl mx-auto px-6 pt-16 md:pt-24 pb-12 text-center">
+          // <section className="max-w-4xl mx-auto px-6 pt-16 md:pt-24 pb-12 text-center">
+          <section className="max-w-4xl mx-auto px-4 md:px-8 pt-16 md:pt-24 pb-12 text-center">
             {/* Badge Pill Pastel Accent */}
             <div className="inline-flex items-center gap-2 bg-surface-card border border-hairline px-3 py-1 rounded-full text-[13px] font-medium text-ink mb-6">
               <span className="w-2 h-2 rounded-full bg-badge-emerald"></span>
@@ -139,7 +130,7 @@ export default function Home() {
               Dapatkan diagnostik mendalam, skor kompatibilitas ATS, serta saran penulisan ulang berbasis kalimat konkret dalam hitungan detik.
             </p>
 
-            {/* Input Opsional: Job Description Target[cite: 1, 2] */}
+            {/* Input Opsional: Job Description Target */}
             <div className="max-w-xl mx-auto mt-6 text-left">
               <label className="text-[13px] font-semibold text-muted block mb-1.5">
                 Job Description Target (Opsional):
@@ -149,14 +140,14 @@ export default function Home() {
                 onChange={(e) => setJobDescription(e.target.value)}
                 placeholder="Tempelkan deskripsi lowongan kerja di sini agar AI bisa menilai relevansi resume Anda..."
                 rows={2}
-                className="w-full bg-surface-soft border border-hairline rounded-md p-3 text-[13px] text-ink focus:outline-none focus:border-muted transition-colors resize-none"
+                className="w-full bg-surface-soft border border-hairline rounded-md p-3 text-[16px] sm:text-[13px] text-ink focus:outline-none focus:border-muted transition-colors resize-none"
               />
             </div>
           </section>
         )}
 
         {/* MAIN CONTENT: RESUME UPLOADER CARD[ */}
-        <section className="max-w-4xl mx-auto px-6 pb-24">
+        <section className="max-w-4xl mx-auto px-4 md:px-8 pb-24">
           {!analysisData && !isAnalyzing ? (
             <ResumeUploader onParseSuccess={handleStartAnalysis} />
           ) : (
@@ -164,13 +155,14 @@ export default function Home() {
               data={analysisData}
               isStreaming={isAnalyzing}
               onReset={handleReset}
+              originalText={originalResumeText}
             />
           )}
         </section>
       </div>
 
       {/* FOOTER (Dark Navy closing surface) */}
-      <footer className="bg-surface-dark text-on-dark-soft py-8 px-6 border-t border-surface-dark-elevated mt-12">
+      <footer className="bg-surface-dark text-on-dark-soft py-8 px-4 md:px-8 border-t border-surface-dark-elevated mt-12">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-[13px] text-muted-soft">
             © {new Date().getFullYear()} Resuma. AI Resume Reviewer, created by Andra while enjoying a cup of coffee.
