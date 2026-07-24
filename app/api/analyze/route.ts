@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { ai, GEMINI_MODEL } from "@/app/lib/gemini";
-import { buildResumeReviewPrompt, resumeAnalysisSchema } from "@/app/lib/prompts/resume-reviewer";
+import { buildResumeReviewPrompt, getResumeAnalysisSchema } from "@/app/lib/prompts/resume-reviewer";
 
 // Gunakan runtime nodejs untuk stabilitas stream
 export const runtime = 'nodejs';
@@ -18,9 +18,14 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const hasJobDesc = Boolean(jobDescription && jobDescription.trim() !== '');
+
         // Rakit Prompt menggunakan Helper dari FASE 2
         const prompt = buildResumeReviewPrompt(resumeText, language, jobDescription);
-        console.log(`>>> [API Analyze] Memulai streaming Gemini (${GEMINI_MODEL}) | Lang: ${language}`);
+
+        const dynamicSchema = getResumeAnalysisSchema(hasJobDesc);
+
+        console.log(`>>> [API Analyze] Memulai streaming Gemini (${GEMINI_MODEL}) | Lang: ${language} | Has JobDesc: ${hasJobDesc}`);
 
         // Panggil Gemini API dengan fitur Streaming & Structured Output
         const responseStream = await ai.models.generateContentStream({
@@ -29,7 +34,7 @@ export async function POST(req: NextRequest) {
             config: {
                 // Kunci skema output agar AI wajib membalas dengan format JSON yang ketat
                 responseMimeType: 'application/json',
-                responseSchema: resumeAnalysisSchema,
+                responseSchema: dynamicSchema,
                 temperature: 0.2, // Rendah agar analisisnya objektif dan konsisten
             }
         });

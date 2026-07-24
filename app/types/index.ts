@@ -30,6 +30,12 @@ export interface AtsIssue {
     recommendation: string;
 }
 
+export interface KeywordAnalysis {
+    matchScore: number;
+    matchedKeywords: string[];
+    missingKeywords: string[];
+}
+
 // Skema utama JSON output dari AI
 export interface ResumeAnalysisResult {
     detectedRole: string;
@@ -40,4 +46,5 @@ export interface ResumeAnalysisResult {
     genericPhrases: GenericPhrase[];
     rewriteSuggestions: RewriteSuggestion[];
     atsIssues: AtsIssue[];
+    keywordAnalysis?: KeywordAnalysis;
 }
