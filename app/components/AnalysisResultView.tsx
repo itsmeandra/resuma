@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ResumeAnalysisResult } from '@/app/types';
 import { text } from 'stream/consumers';
 import HighlightedResume from './HighlightedResume';
+import { useReactToPrint } from 'react-to-print';
 
 interface AnalysisResultViewProps {
     data: Partial<ResumeAnalysisResult> | null;
@@ -14,6 +15,14 @@ interface AnalysisResultViewProps {
 
 export default function AnalysisResultView({ data, isStreaming, onReset, originalText }: AnalysisResultViewProps) {
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+    // Ref untuk target elemen yang akan di-export ke PDF
+    const printRef = useRef<HTMLDivElement>(null);
+    const handlePrint = useReactToPrint({
+        contentRef: printRef,
+        documentTitle: `Resume_Analysis_${data?.detectedRole?.replace(/\s+/g, '_') || 'Report'}`,
+    });
+
     if (!data && isStreaming) {
         // Tampilan Loading Awal (Sebelum chunk pertama berhasil di-parse)
         return (
@@ -48,7 +57,7 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
     }
 
     return (
-        <div className="w-full max-w-4xl mx-auto space-y-8 font-body text-ink animate-fadeIn">
+        <div ref={printRef} className="w-full max-w-4xl mx-auto space-y-8 font-body text-ink animate-fadeIn">
 
             {/* HEADER & EXECUTIVE SUMMARY */}
             <div className="bg-canvas border border-hairline rounded-xl p-6 md:p-8 shadow-[0_4px_12px_rgba(0,0,0,0.05)] relative overflow-hidden">
@@ -128,7 +137,7 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
 
                         {/* Match Score Indicator */}
                         <div className="flex items-center gap-4 bg-canvas p-3.5 rounded-xl border border-hairline shadow-sm shrink-0">
-                            <span className="text-[12px] font-semibold text-muted uppercase">Tingkat Kecocokan</span>
+                            <span className="text-[12px] font-semibold text-muted uppercase">Kecocokan</span>
                             <span className={`font-display font-bold text-3xl ${getScoreColor(data.keywordAnalysis.matchScore)}`}>
                                 {data.keywordAnalysis.matchScore !== undefined ? `${data.keywordAnalysis.matchScore}%` : '?'}
                             </span>
@@ -140,20 +149,12 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
                         <div className="space-y-4">
                             <h4 className="text-[14px] font-semibold text-success flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
-                                Keyword Ditemukan di Resume
+                                Keyword Ditemukan
                             </h4>
                             <div className="flex flex-wrap gap-2">
-                                {data.keywordAnalysis.matchedKeywords && data.keywordAnalysis.matchedKeywords.length > 0 ? (
-                                    data.keywordAnalysis.matchedKeywords.map((kw, i) => (
-                                        <span key={`match-${i}`} className="bg-success/10 text-success border border-success/20 text-[12px] font-medium px-3 py-1.5 rounded-full transition-colors hover:bg-success/20">
-                                            {kw}
-                                        </span>
-                                    ))
-                                ) : (
-                                    <span className="text-[13px] text-muted italic bg-canvas px-3 py-1 rounded border border-hairline">
-                                        Sedang mencari kecocokan...
-                                    </span>
-                                )}
+                                {data.keywordAnalysis.matchedKeywords?.map((kw, i) => (
+                                    <span key={i} className="bg-success/10 text-success border border-success/20 text-[12px] font-medium px-3 py-1.5 rounded-full">{kw}</span>
+                                ))}
                             </div>
                         </div>
 
@@ -161,20 +162,12 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
                         <div className="space-y-4">
                             <h4 className="text-[14px] font-semibold text-error flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-error shadow-[0_0_8px_rgba(239,68,68,0.4)]"></span>
-                                Keyword Penting yang Hilang (Gap)
+                                Keyword Hilang
                             </h4>
                             <div className="flex flex-wrap gap-2">
-                                {data.keywordAnalysis.missingKeywords && data.keywordAnalysis.missingKeywords.length > 0 ? (
-                                    data.keywordAnalysis.missingKeywords.map((kw, i) => (
-                                        <span key={`miss-${i}`} className="bg-error/10 text-error border border-error/20 text-[12px] font-medium px-3 py-1.5 rounded-full transition-colors hover:bg-error/20">
-                                            {kw}
-                                        </span>
-                                    ))
-                                ) : (
-                                    <span className="text-[13px] text-muted italic bg-canvas px-3 py-1 rounded border border-hairline">
-                                        Semua keyword penting sudah tercakup!
-                                    </span>
-                                )}
+                                {data.keywordAnalysis.missingKeywords?.map((kw, i) => (
+                                    <span key={i} className="bg-error/10 text-error border border-error/20 text-[12px] font-medium px-3 py-1.5 rounded-full">{kw}</span>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -199,38 +192,32 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
                 </div>
 
                 <div className="space-y-4">
-                    {!data.rewriteSuggestions || data.rewriteSuggestions.length === 0 ? (
-                        <div className="p-8 text-center bg-canvas rounded-lg border border-hairline text-muted animate-pulse text-[14px]">
-                            Sedang menganalisis kalimat pengalaman kerja Anda...
-                        </div>
-                    ) : (
-                        data.rewriteSuggestions.map((item, idx) => (
-                            <div key={idx} className="bg-canvas border border-hairline rounded-lg p-5 shadow-sm space-y-4">
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <div className="bg-error/5 p-3.5 rounded-md border border-error/15">
-                                        <span className="text-[11px] font-bold text-error uppercase block mb-1">Versi Asli (Kurang Kuat):</span>
-                                        <p className="text-[13px] text-body line-through decoration-error/50">{item.original}</p>
-                                    </div>
-                                    <div className="bg-success/5 p-3.5 rounded-md border border-success/20">
-                                        <div className="flex justify-between items-center mb-1.5">
-                                            <span className="text-[11px] font-bold text-success uppercase">Versi STAR (Disarankan):</span>
-                                            <button
-                                                onClick={() => handleCopy(item.improved || '', idx)}
-                                                className="text-[10px] text-ink font-semibold bg-canvas px-2 py-1 rounded border border-hairline shadow-sm hover:bg-surface-soft transition-colors"
-                                            >
-                                                {copiedIndex === idx ? 'Tersalin' : 'Salin'}
-                                            </button>
-                                        </div>
-                                        <p className="text-[13px] text-ink font-medium">{item.improved}</p>
-                                    </div>
+                    {data.rewriteSuggestions?.map((item, idx) => (
+                        <div key={idx} className="bg-canvas border border-hairline rounded-lg p-5 shadow-sm space-y-4">
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="bg-error/5 p-3.5 rounded-md border border-error/15">
+                                    <span className="text-[11px] font-bold text-error uppercase block mb-1">Versi Asli (Kurang Kuat):</span>
+                                    <p className="text-[13px] text-body line-through decoration-error/50">{item.original}</p>
                                 </div>
-                                <div className="bg-surface-soft p-3 rounded text-[12px] text-muted flex items-start gap-2">
-                                    <span className="font-bold text-ink shrink-0">Mengapa lebih baik?</span>
-                                    <span>{item.reasoning}</span>
+                                <div className="bg-success/5 p-3.5 rounded-md border border-success/20">
+                                    <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-[11px] font-bold text-success uppercase">Versi STAR (Disarankan):</span>
+                                        <button
+                                            onClick={() => handleCopy(item.improved || '', idx)}
+                                            className="text-[10px] text-ink font-semibold bg-canvas px-2 py-1 rounded border border-hairline shadow-sm hover:bg-surface-soft transition-colors"
+                                        >
+                                            {copiedIndex === idx ? 'Tersalin' : 'Salin'}
+                                        </button>
+                                    </div>
+                                    <p className="text-[13px] text-ink font-medium">{item.improved}</p>
                                 </div>
                             </div>
-                        ))
-                    )}
+                            <div className="bg-surface-soft p-3 rounded text-[12px] text-muted flex items-start gap-2">
+                                <span className="font-bold text-ink shrink-0">Mengapa lebih baik?</span>
+                                <span>{item.reasoning}</span>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 
@@ -243,23 +230,19 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
                         Kompatibilitas ATS
                     </h3>
                     <div className="space-y-3">
-                        {!data.atsIssues || data.atsIssues.length === 0 ? (
-                            <p className="text-[13px] text-muted italic">Mengecek kelayakan format ATS...</p>
-                        ) : (
-                            data.atsIssues.map((ats, idx) => (
-                                <div key={idx} className="p-3.5 rounded-lg border border-hairline bg-surface-soft space-y-1.5">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="text-[13px] font-semibold text-ink">{ats.issue}</span>
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${ats.severity === 'high' ? 'bg-error text-white' :
-                                            ats.severity === 'medium' ? 'bg-warning text-ink' : 'bg-surface-strong text-muted'
-                                            }`}>
-                                            {ats.severity}
-                                        </span>
-                                    </div>
-                                    <p className="text-[12px] text-muted"><strong className="text-ink font-medium">Saran:</strong> {ats.recommendation}</p>
+                        {data.atsIssues?.map((ats, idx) => (
+                            <div key={idx} className="p-3.5 rounded-lg border border-hairline bg-surface-soft space-y-1.5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="text-[13px] font-semibold text-ink">{ats.issue}</span>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${ats.severity === 'high' ? 'bg-error text-white' :
+                                        ats.severity === 'medium' ? 'bg-warning text-ink' : 'bg-surface-strong text-muted'
+                                        }`}>
+                                        {ats.severity}
+                                    </span>
                                 </div>
-                            ))
-                        )}
+                                <p className="text-[12px] text-muted"><strong className="text-ink font-medium">Saran:</strong> {ats.recommendation}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -272,36 +255,13 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
                         Arahkan kursosr (hover) pada <span className="bg-warning/20 text-warning px-1 rounded-sm font-semibold">teks yang disorot</span> di bawah untuk melihat saran.
                     </p>
                     <div className="grow">
-                        {!originalText ? (
-                            <p className="text-[13px] text-muted italic">Memuat teks...</p>
-                        ) : (
-                            <HighlightedResume
-                                text={originalText}
-                                genericPhrases={data.genericPhrases}
-                            />
-                        )}
-                    </div>
-                    <div className="space-y-3">
-                        {!data.genericPhrases || data.genericPhrases.length === 0 ? (
-                            <p className="text-[13px] text-muted italic">Mencari kata generic pemalas...</p>
-                        ) : (
-                            data.genericPhrases.map((phrase, idx) => (
-                                <div key={idx} className="p-3.5 rounded-lg border border-hairline bg-surface-soft space-y-1">
-                                    <div className="flex justify-between items-start gap-2">
-                                        <span className="text-[13px] font-semibold text-error">&quot;{phrase.text}&quot;</span>
-                                        <span className="text-[11px] text-muted-soft">{phrase.location}</span>
-                                    </div>
-                                    <p className="text-[12px] text-body"><strong className="text-ink font-medium">Ganti dengan:</strong> {phrase.suggestion}</p>
-                                </div>
-                            ))
-                        )}
+                        <HighlightedResume text={originalText} genericPhrases={data.genericPhrases} />
                     </div>
                 </div>
-
             </div>
 
             {/* ACTION FOOTER */}
-            <div className="flex justify-center pt-6">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8 print:hidden">
                 <button
                     onClick={onReset}
                     disabled={isStreaming}
@@ -312,8 +272,17 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
                 >
                     {isStreaming ? 'Menunggu Streaming Selesai...' : 'Analisis Resume Lainnya'}
                 </button>
-            </div>
 
+                {/* Buttoon EXPORT PDF */}
+                {!isStreaming && (
+                    <button
+                        onClick={handlePrint}
+                        className="px-8 py-3 rounded-md font-semibold text-[14px] bg-primary hover:bg-primary-active text-white shadow-md flex items-center gap-2"
+                    >
+                        Export PDF
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
