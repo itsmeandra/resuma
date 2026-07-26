@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ResumeUploader from '@/app/components/ResumeUploader';
 import AnalysisResultView from './components/AnalysisResultView';
 import { ResumeAnalysisResult } from './types';
 import { safePartialJsonParse } from './lib/utils/json-parser';
+import { useReviewHistory } from './lib/hooks/useReviewHistory';
 
 export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
@@ -13,6 +14,7 @@ export default function Home() {
   const [jobDescription, setJobDescription] = useState<string>('');
   const [originalResumeText, setOriginalResumeText] = useState<string>('');
 
+  const { history, saveToHistory, clearHistory } = useReviewHistory();
 
   // const [analyzingData, setAnalyzingData] = useState<{ filename: string; text: string } | null>(null);
 
@@ -20,6 +22,18 @@ export default function Home() {
   //   setAnalyzingData({ filename, text });
   //   alert(`SIAP MENGANALISIS: ${filename}\n\n(Lanjut ke Fase 2 untuk proses AI Prompt & Streaming)`);
   // };
+
+  useEffect(() => {
+    const saveLang = localStorage.getItem('preferred_language');
+    if (saveLang === 'id' || saveLang === 'en') {
+      setLanguage(saveLang);
+    }
+  }, []);
+
+  const handleLanguageChange = (lang: 'id' | 'en') => {
+    setLanguage(lang);
+    localStorage.setItem('preferred_language', lang);
+  }
 
   // Fungsi utama yang memicu Streaming API ke /api/analyze
   const handleStartAnalysis = async (filename: string, text: string) => {
@@ -46,21 +60,24 @@ export default function Home() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let accumulatedJson = '';
+      let finalData: Partial<ResumeAnalysisResult> | null = null;
 
       while (true) {
         const { done, value }
           = await reader.read();
         if (done) break;
 
-        // Decode potongan bytes menjadi string teks
-        const chunkText = decoder.decode(value, { stream: true });
-        accumulatedJson += chunkText;
-
-        // Coba parse secara best-effort dan update UI secara real-time![cite: 2, 3]
+        accumulatedJson += decoder.decode(value, { stream: true });
         const partialData = safePartialJsonParse(accumulatedJson);
         if (partialData) {
+          finalData = partialData;
           setAnalysisData({ ...partialData });
         }
+      }
+
+      // 3. Simpan ke Riwayat setelah streaming selesai sukses 100%
+      if (finalData && finalData.overallScore !== undefined) {
+        saveToHistory(filename, text, finalData as ResumeAnalysisResult);
       }
     } catch (error) {
       console.error('Streaming error:', error);
@@ -103,11 +120,16 @@ export default function Home() {
             </span>
           </div>
 
-          {/* Right Action */}
           <div className="flex items-center gap-3">
-            <span className="text-[13px] font-medium text-muted hidden sm:inline">
-              Powered by <strong className="text-ink">Gemini LLM</strong>
-            </span>
+            <select
+              value={language}
+              onChange={(e) => handleLanguageChange(e.target.value as 'id' | 'en')}
+              disabled={isAnalyzing}
+              className="bg-surface-soft border border-hairline text-ink text-[13px] font-medium px-3 py-1.5 rounded-md focus:outline-none focus:border-muted cursor-pointer"
+            >
+              <option value="id">🇮🇩 Bahasa Indonesia</option>
+              <option value="en">🇬🇧 English</option>
+            </select>
           </div>
         </header>
 
@@ -121,7 +143,7 @@ export default function Home() {
               <span>Standar rekrutmen ATS & Metode STAR</span>
             </div>
 
-            {/* Display Headline (Cal Sans 600, negative tracking) */}
+            {/* Display Headline */}
             <h1 className="font-display font-semibold text-4xl sm:text-5xl md:text-[56px] text-ink leading-[1.08] tracking-tight max-w-3xl mx-auto">
               Cara yang lebih baik untuk mengevaluasi resume Anda.
             </h1>
@@ -131,23 +153,25 @@ export default function Home() {
             </p>
 
             {/* Input Opsional: Job Description Target */}
-            <div className="max-w-xl mx-auto mt-6 text-left">
-              <label className="text-[13px] font-semibold text-muted block mb-1.5">
-                Job Description Target (Opsional):
-              </label>
-              <textarea
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Tempelkan deskripsi lowongan kerja di sini agar AI bisa menilai relevansi resume Anda..."
-                rows={2}
-                className="w-full bg-surface-soft border border-hairline rounded-md p-3 text-[16px] sm:text-[13px] text-ink focus:outline-none focus:border-muted transition-colors resize-none"
-              />
+            <div className="max-w-xl mx-auto mt-6 text-left space-y-6">
+              <div>
+                <label className="text-[13px] font-semibold text-muted block mb-1.5">
+                  Job Description Target (Opsional):
+                </label>
+                <textarea
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  placeholder="Tempelkan deskripsi lowongan kerja di sini..."
+                  rows={2}
+                  className="w-full bg-surface-soft border border-hairline rounded-md p-3 text-[13px] text-ink focus:outline-none focus:border-muted resize-none"
+                />
+              </div>
             </div>
           </section>
         )}
 
         {/* MAIN CONTENT: RESUME UPLOADER CARD[ */}
-        <section className="max-w-4xl mx-auto px-4 md:px-8 pb-24">
+        <section className="max-w-4xl mx-auto px-6 md:px-8 pb-12 mt-6">
           {!analysisData && !isAnalyzing ? (
             <ResumeUploader onParseSuccess={handleStartAnalysis} />
           ) : (
@@ -159,6 +183,38 @@ export default function Home() {
             />
           )}
         </section>
+        {/* 4. RIWAYAT REVIEW UI */}
+        <div className="max-w-xl mx-auto mt-6 text-left space-y-6">
+          {history.length > 0 && (
+            <div className="border-t border-hairline-soft pt-6 mt-6">
+              <div className="flex justify-between items-center mb-3">
+                <label className="text-[13px] font-semibold text-muted block">
+                  Riwayat Analisis Terakhir:
+                </label>
+                <button onClick={clearHistory} className="text-[11px] text-error hover:underline">Hapus Semua</button>
+              </div>
+              <div className="space-y-2">
+                {history.map(item => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      setOriginalResumeText(item.originalText);
+                      setAnalysisData(item.data);
+                    }}
+                    className="bg-canvas border border-hairline p-3 rounded-md cursor-pointer hover:border-muted flex justify-between items-center transition-colors shadow-sm"
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <span className="text-[13px] font-medium text-ink truncate">{item.filename}</span>
+                    </div>
+                    <span className="text-[11px] text-muted font-semibold bg-surface-soft px-2 py-1 rounded shrink-0">
+                      Skor: {item.data.overallScore}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* FOOTER (Dark Navy closing surface) */}
