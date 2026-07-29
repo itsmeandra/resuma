@@ -9,19 +9,13 @@ import { useReviewHistory } from './lib/hooks/useReviewHistory';
 
 export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
   const [analysisData, setAnalysisData] = useState<Partial<ResumeAnalysisResult> | null>(null);
   const [language, setLanguage] = useState<'id' | 'en'>('id');
   const [jobDescription, setJobDescription] = useState<string>('');
   const [originalResumeText, setOriginalResumeText] = useState<string>('');
 
   const { history, saveToHistory, clearHistory } = useReviewHistory();
-
-  // const [analyzingData, setAnalyzingData] = useState<{ filename: string; text: string } | null>(null);
-
-  // const handleParseSuccess = (filename: string, text: string) => {
-  //   setAnalyzingData({ filename, text });
-  //   alert(`SIAP MENGANALISIS: ${filename}\n\n(Lanjut ke Fase 2 untuk proses AI Prompt & Streaming)`);
-  // };
 
   useEffect(() => {
     const saveLang = localStorage.getItem('preferred_language');
@@ -39,6 +33,7 @@ export default function Home() {
   const handleStartAnalysis = async (filename: string, text: string) => {
     setIsAnalyzing(true);
     setAnalysisData(null);
+    setGlobalError(null);
     setOriginalResumeText(text);
 
     try {
@@ -52,9 +47,12 @@ export default function Home() {
         }),
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error('Gagal memulai streaming dari server.');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server Error (${response.status})`);
       }
+
+      if (!response.body) throw new Error('Gagal memulai streaming dari server.');
 
       // Membaca aliran stream dari API Route menggunakan ReadableStream Reader
       const reader = response.body.getReader();
@@ -79,9 +77,9 @@ export default function Home() {
       if (finalData && finalData.overallScore !== undefined) {
         saveToHistory(filename, text, finalData as ResumeAnalysisResult);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Streaming error:', error);
-      alert('Terjadi kesalahan saat menganalisis dokumen. Silakan coba lagi.');
+      setGlobalError(error.message || 'Terjadi kesalahan saat menganalisis dokumen. Silakan coba lagi.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -133,9 +131,22 @@ export default function Home() {
           </div>
         </header>
 
+        {globalError && (
+          <div className="max-w-4xl mx-auto px-4 md:px-8 mt-6 animate-fade-in-up">
+            <div className="bg-error/10 border border-error/20 text-error p-4 rounded-lg text-[14px] font-medium flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">⚠️</span>
+                <span>{globalError}</span>
+              </div>
+              <button onClick={() => setGlobalError(null)} className="text-error hover:text-ink font-bold px-2">
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* HERO BAND (Generous Whitespace 96px rhythm) */}
         {!analysisData && !isAnalyzing && (
-          // <section className="max-w-4xl mx-auto px-6 pt-16 md:pt-24 pb-12 text-center">
           <section className="max-w-4xl mx-auto px-4 md:px-8 pt-16 md:pt-24 pb-12 text-center">
             {/* Badge Pill Pastel Accent */}
             <div className="inline-flex items-center gap-2 bg-surface-card border border-hairline px-3 py-1 rounded-full text-[13px] font-medium text-ink mb-6">

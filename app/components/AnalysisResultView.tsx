@@ -26,7 +26,7 @@ export default function AnalysisResultView({ data, isStreaming, onReset, origina
     if (!data && isStreaming) {
         // Tampilan Loading Awal (Sebelum chunk pertama berhasil di-parse)
         return (
-            <div className="w-full max-w-4xl mx-auto bg-canvas border border-hairline rounded-xl p-6 md:p-12 text-center space-y-6 shadow-sm">
+            <div className="w-full max-w-4xl mx-auto bg-canvas border border-hairline rounded-xl p-6 md:p-12 text-center space-y-6 shadow-sm animate-fade-in-up">
                 <div className="inline-block w-10 h-10 border-3 border-muted border-t-primary rounded-full animate-spin"></div>
                 <div className="space-y-2">
                     <h3 className="font-display font-semibold text-xl text-ink">

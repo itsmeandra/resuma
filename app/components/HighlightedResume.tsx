@@ -45,9 +45,9 @@ export default function HighlightedResume({ text, genericPhrases = [] }: Highlig
                                     onClick={() => setActiveTooltip(activeTooltip === index ? null : index)}
                                 >
                                     {fragment}
-                                    {/* Tooltip bergaya Cal.com */}
                                     {activeTooltip === index && (
-                                        <span className="absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-surface-dark text-on-dark text-[11px] font-body font-normal rounded-md shadow-lg leading-tight pointer-events-none">
+                                        <span className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 sm:w-64 p-3 bg-surface-dark text-on-dark text-[12px] font-body font-normal rounded-lg shadow-xl leading-relaxed pointer-events-none wrap-break-words">
+                                            {/* <span className="absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-surface-dark text-on-dark text-[11px] font-body font-normal rounded-md shadow-lg leading-tight pointer-events-none"> */}
                                             <strong className="block text-warning mb-1">Ganti dengan:</strong>
                                             {phrase.suggestion}
                                             <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-surface-dark"></span>
