@@ -87,10 +87,11 @@ export async function POST(req: NextRequest) {
             text: cleanText,
         });
 
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown Error';
         console.error('>>> [Server API Exception FATAL]:', error);
         return NextResponse.json(
-            { success: false, error: `SYSTEM FAULT: Gagal membaca file (${error.message || 'Unknown Error'}).` },
+            { success: false, error: `SYSTEM FAULT: Gagal membaca file (${message}).` },
             { status: 500 }
         );
     }
