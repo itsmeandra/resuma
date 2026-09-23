@@ -10,7 +10,7 @@ export function safePartialJsonParse(jsonString: string): Partial<ResumeAnalysis
     // Coba parse normal terlebih dahulu (jika stream sudah selesai 100%)
     try {
         return JSON.parse(jsonString) as ResumeAnalysisResult;
-    } catch (e) {
+    } catch {
         // Lanjut ke best-effort parsing jika masih parsial
     }
 
@@ -65,7 +65,7 @@ export function safePartialJsonParse(jsonString: string): Partial<ResumeAnalysis
     // Coba parse kembali string yang sudah "diperbaiki"
     try {
         return JSON.parse(cleaned) as Partial<ResumeAnalysisResult>;
-    } catch (e) {
+    } catch {
         // Jika masih gagal (karena potongannya terlalu awal), kembalikan null
         return null;
     }

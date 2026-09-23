@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
                     }
                     console.log('>>> [API Analyze] Streaming selesai dengan sukses!');
                     controller.close();
-                } catch (error: any) {
+                } catch (error) {
                     console.error('>>> [API Analyze Stream Error]:', error);
                     controller.error(error);
                 }
@@ -69,10 +69,11 @@ export async function POST(req: NextRequest) {
                 'X-Content-Type-Options': 'nosniff',
             },
         });
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown Error';
         console.error('>>> [API Analyze Fatal Error]:', error);
         return new Response(
-            JSON.stringify({ error: `Gagal memproses analisis AI: ${error.message || 'Unknown Error'}` }),
+            JSON.stringify({ error: `Gagal memproses analisis AI: ${message}` }),
             { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
     }
